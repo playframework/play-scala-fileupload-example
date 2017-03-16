@@ -19,7 +19,7 @@ import play.api.mvc.MultipartFormData.FilePart
 import play.api.mvc._
 import play.core.parsers.Multipart.FileInfo
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 case class FormData(name: String)
 
@@ -27,7 +27,7 @@ case class FormData(name: String)
  * This controller handles a file upload.
  */
 @Singleton
-class HomeController @Inject() (implicit val messagesApi: MessagesApi) extends Controller with i18n.I18nSupport {
+class HomeController @Inject() (implicit val messagesApi: MessagesApi, ec: ExecutionContext) extends Controller with i18n.I18nSupport {
 
   private val logger = org.slf4j.LoggerFactory.getLogger(this.getClass)
 
@@ -59,13 +59,13 @@ class HomeController @Inject() (implicit val messagesApi: MessagesApi) extends C
       val attr = PosixFilePermissions.asFileAttribute(util.EnumSet.of(OWNER_READ, OWNER_WRITE))
       val path: Path = Files.createTempFile("multipartBody", "tempFile", attr)
       val file = path.toFile
-      val fileSink: Sink[ByteString, Future[IOResult]] = FileIO.toFile(file)
+      val fileSink: Sink[ByteString, Future[IOResult]] = FileIO.toPath(path)
       val accumulator: Accumulator[ByteString, IOResult] = Accumulator(fileSink)
       accumulator.map {
         case IOResult(count, status) =>
           logger.info(s"count = $count, status = $status")
           FilePart(partName, filename, contentType, file)
-      }(play.api.libs.concurrent.Execution.defaultContext)
+      }
   }
 
   /**
