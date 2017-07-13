@@ -4,6 +4,7 @@
 
 GET     /                           controllers.HomeController.index
 
++ nocsrf
 POST    /upload                     controllers.HomeController.upload
 
 # Map static resources from the /public folder to the /assets URL path
